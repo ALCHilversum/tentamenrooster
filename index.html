@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docentroosters - Upload & Bekijk</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-card {
+            background-color: #f8f9fa;
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .upload-card:hover {
+            background-color: #eaf4fc;
+        }
+        .upload-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+        .upload-card p {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .upload-card label {
+            display: inline-block;
+            padding: 12px 28px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .upload-card label:hover {
+            background-color: #2980b9;
+        }
+        .upload-card input[type="file"] {
+            display: none;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .controls label {
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 60px;
+        }
+        select {
+            padding: 12px;
+            font-size: 16px;
+            flex: 1;
+            min-width: 200px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.print-btn {
+            background-color: #27ae60;
+        }
+        button.print-btn:hover {
+            background-color: #229954;
+        }
+        button.vak-btn {
+            background-color: #9b59b6;
+        }
+        button.vak-btn:hover {
+            background-color: #8e44ad;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            page-break-inside: auto;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .date-header {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            margin-top: 30px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 18px;
+            page-break-after: avoid;
+        }
+        .date-header:first-of-type {
+            margin-top: 0;
+        }
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .surveillant {
+            background-color: #27ae60;
+            color: white;
+        }
+        .reserve {
+            background-color: #e67e22;
+            color: white;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .print-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .divider {
+            border-top: 2px dashed #ddd;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #3498db;
+            font-size: 18px;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+        .hidden {
+            display: none !important;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 15px;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .controls, .print-info, .footer, button, .stats, .divider, .upload-card {
+                display: none !important;
+            }
+            .date-header {
+                background-color: #3498db !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            th {
+                background-color: #2c3e50 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .role-badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .surveillant {
+                background-color: #27ae60 !important;
+            }
+            .reserve {
+                background-color: #e67e22 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Docentroosters</h1>
+        <div class="subtitle">Upload een Excel-bestand om docentroosters te genereren</div>
+        
+        <div class="upload-card">
+            <h3>📁 Upload je roosterbestand</h3>
+            <p>Selecteer een Excel-bestand (.xlsx, .xls of .csv) met toetsweekgegevens</p>
+            <label for="excel-file">📂 Kies bestand</label>
+            <input type="file" id="excel-file" accept=".xlsx,.xls,.csv">
+        </div>
+
+        <div class="stats hidden" id="stats"></div>
+
+        <div id="filters" class="hidden">
+            <div class="print-info">
+                <strong>💡 Tip:</strong> Selecteer een docent of vak en klik op 'Afdrukken' voor een printervriendelijke versie.
+            </div>
+            
+            <div class="controls">
+                <label>👤 Docent:</label>
+                <select id="docent-select">
+                    <option value="">-- Selecteer een docent --</option>
+                </select>
+                <button onclick="toonRooster()">Toon rooster</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="controls">
+                <label>📚 Vak:</label>
+                <select id="vak-select">
+                    <option value="">-- Selecteer een vak --</option>
+                </select>
+                <button class="vak-btn" onclick="toonVakRooster()">Toon per vak</button>
+                <button class="print-btn" onclick="printRooster()">🖨️ Afdrukken</button>
+            </div>
+        </div>
+
+        <div id="rooster-container">
+            <div class="no-data">
+                👆 Upload eerst een Excel-bestand om te beginnen
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Gemaakt met ❤️ voor het docententeam • Werkt volledig offline</p>
+        </div>
+    </div>
+
+    <script>
+        let roosterData = {};
+
+        // ============ FILE UPLOAD HANDLER ============
+        document.getElementById('excel-file').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const container = document.getElementById('rooster-container');
+            container.innerHTML = '<div class="loading">⏳ Bestand wordt ingelezen...</div>';
+            
+            try {
+                await new Promise(r => setTimeout(r, 50));  // Allow UI to update
+                roosterData = await processExcel(file);
+                
+                if (Object.keys(roosterData).length === 0) {
+                    container.innerHTML = '<div class="error">⚠️ Geen surveillantgegevens gevonden in het bestand.<br><br>Controleer of het bestand de juiste bladen bevat (met "surv (uur)" en "res (uur)" kolommen).</div>';
+                    return;
+                }
+                
+                populateUI(roosterData);
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="error">❌ Fout bij het inlezen: ${err.message}</div>`;
+            }
+        });
+
+        // ============ EXCEL PROCESSING ============
+        async function processExcel(file) {
+            const data = await file.arrayBuffer();
+            const wb = XLSX.read(data, { type: 'array' });
+            const allData = {};
+            
+            for (const sheetName of wb.SheetNames) {
+                const sheet = wb.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                
+                if (!isScheduleSheet(rows)) continue;
+                
+                parseScheduleSheet(rows, sheetName, allData);
+            }
+            
+            return allData;
+        }
+
+        function isScheduleSheet(rows) {
+            // Check if this sheet has the classic "surv (uur)" / "res (uur)" headers
+            for (const row of rows.slice(0, 10)) {
+                const G = s(row[6]).toLowerCase();
+                const H = s(row[7]).toLowerCase();
+                if (G.includes('surv') && H.includes('res')) return true;
+            }
+            return false;
+        }
+
+        function parseScheduleSheet(rows, sheetName, allData) {
+            let curDateL = '', curDateR = '';
+            let curVakL = '', curVakR = '';
+            let curLesL = '', curLesR = '';
+            let curGroepL = '', curGroepR = '';
+            let curLokaalL = '', curLokaalR = '';
+            
+            const entries = {};
+            
+            rows.forEach((row, idx) => {
+                if (idx < 2) return;
+                
+                const A = s(row[0]), B = s(row[1]), C = s(row[2]), E = s(row[4]), F = s(row[5]);
+                const G = s(row[6]), H = s(row[7]);
+                const K = s(row[10]), L = s(row[11]), M = s(row[12]), O = s(row[14]), P = s(row[15]);
+                const Q = s(row[16]), R = s(row[17]);
+                
+                // Update dates
+                if (isDateHeader(A)) { curDateL = normalizeDate(A); curVakL=''; curLesL=''; curGroepL=''; curLokaalL=''; }
+                if (isDateHeader(K)) { curDateR = normalizeDate(K); curVakR=''; curLesR=''; curGroepR=''; curLokaalR=''; }
+                
+                // Update les
+                if (B && B.toLowerCase() !== 'les' && B.toLowerCase() !== 'datum') curLesL = B;
+                if (L && L.toLowerCase() !== 'les' && L.toLowerCase() !== 'datum') curLesR = L;
+                
+                // Update vak
+                if (C && C.toLowerCase() !== 'vak') curVakL = C;
+                if (M && M.toLowerCase() !== 'vak') curVakR = M;
+                
+                // Update group + lokaal
+                if (E && E.toLowerCase() !== 'groep' && !E.startsWith('Leerling')) {
+                    curGroepL = E.replace(/\s*\(\d+\)\s*$/, '').trim();
+                    curLokaalL = F;
+                }
+                if (O && O.toLowerCase() !== 'groep' && !O.startsWith('Leerling')) {
+                    curGroepR = O.replace(/\s*\(\d+\)\s*$/, '').trim();
+                    curLokaalR = P;
+                }
+                
+                // Parse surveillant cells
+                const sl = parseSurv(G), rl = parseSurv(H);
+                const sr = parseSurv(Q), rr = parseSurv(R);
+                
+                if (sl && curDateL && curVakL && curGroepL) 
+                    addEntry(entries, curDateL, curVakL, curGroepL, curLokaalL, sl, 'Surveillant');
+                if (rl && curDateL && curVakL && curGroepL) 
+                    addEntry(entries, curDateL, curVakL, curGroepL, curLokaalL, rl, 'Reserve');
+                if (sr && curDateR && curVakR && curGroepR) 
+                    addEntry(entries, curDateR, curVakR, curGroepR, curLokaalR, sr, 'Surveillant');
+                if (rr && curDateR && curVakR && curGroepR) 
+                    addEntry(entries, curDateR, curVakR, curGroepR, curLokaalR, rr, 'Reserve');
+            });
+            
+            // Convert entries to final format
+            Object.values(entries).forEach(entry => {
+                const tijd = formatUren(entry.uren);
+                if (!tijd) return;
+                
+                if (!allData[entry.docent]) allData[entry.docent] = [];
+                allData[entry.docent].push({
+                    datum: entry.datum,
+                    vak: entry.vak,
+                    tijd: tijd,
+                    groep: entry.groep,
+                    lokaal: entry.lokaal,
+                    rol: entry.rol,
+                    _sort: dateToNum(entry.datum)
+                });
+            });
+            
+            // Sort entries by date
+            Object.keys(allData).forEach(d => {
+                allData[d].sort((a, b) => a._sort - b._sort);
+            });
+        }
+
+        function addEntry(entries, datum, vak, groep, lokaal, surv, rol) {
+            surv.docenten.forEach(docent => {
+                if (!docent) return;
+                if (docent.toLowerCase() === 'extern') return;
+                // Basic validation: only letters, maybe with space
+                if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]{0,20}$/.test(docent)) return;
+                
+                const key = `${docent}|${datum}|${vak}|${groep}|${lokaal}|${rol}`;
+                if (!entries[key]) {
+                    entries[key] = { docent, datum, vak, groep, lokaal, rol, uren: [] };
+                }
+                if (surv.uur) entries[key].uren.push(surv.uur);
+            });
+        }
+
+        function parseSurv(cell) {
+            if (!cell) return null;
+            cell = String(cell).trim();
+            if (!cell) return null;
+            
+            // Match "CODE (hour)" or "CODE1/CODE2 (hour)"
+            const m = cell.match(/^([^()]+?)\s*\((.*?)\)\s*$/);
+            if (m) {
+                const docenten = m[1].split('/').map(d => d.trim()).filter(d => d);
+                return { docenten, uur: m[2].trim() };
+            }
+            
+            return null;
+        }
+
+        function formatUren(uren) {
+            if (!uren || uren.length === 0) return '';
+            uren = [...new Set(uren.map(u => String(u).trim()).filter(u => u))];
+            
+            const hasTime = uren.some(u => /^\d{1,2}:\d{2}$/.test(u));
+            const hasTV = uren.some(u => u.toLowerCase() === 'tv');
+            const nums = uren
+                .filter(u => /^\d+$/.test(u))
+                .map(u => parseInt(u))
+                .sort((a, b) => a - b);
+            const uniqueNums = [...new Set(nums)];
+            
+            if (hasTime) {
+                // Time-based tv (centrale toets) → tv comes first
+                if (uniqueNums.length === 0) return 'tv';
+                return 'tv + ' + uniqueNums.join('+') + 'e uur';
+            }
+            if (hasTV) {
+                // String-based tv (timeverlenging) → tv comes last
+                if (uniqueNums.length === 0) return 'tv';
+                return uniqueNums.join('+') + '+tv';
+            }
+            if (uniqueNums.length === 0) return uren.join('+');
+            if (uniqueNums.length === 1) return uniqueNums[0] + 'e uur';
+            return uniqueNums.join('+') + 'e uur';
+        }
+
+        function isDateHeader(str) {
+            if (!str) return false;
+            return /^(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag|ma|di|woe|do|vrij|za|zo)\s/i.test(str);
+        }
+
+        function normalizeDate(str) {
+            if (!str) return '';
+            let s = String(str).trim().toLowerCase();
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        function s(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).trim();
+        }
+
+        function dateToNum(datum) {
+            const match = datum.match(/(\d+)\s+(\w+)/);
+            if (!match) return 0;
+            const day = parseInt(match[1]);
+            const months = { jan:1, feb:2, mrt:3, apr:4, mei:5, jun:6, jul:7, aug:8, sep:9, okt:10, nov:11, dec:12 };
+            const monthStr = match[2].toLowerCase().substring(0, 3);
+            const month = months[monthStr] || 0;
+            return month * 100 + day;
+        }
+
+        // ============ UI POPULATION ============
+        function populateUI(data) {
+            const docentSelect = document.getElementById('docent-select');
+            docentSelect.innerHTML = '<option value="">-- Selecteer een docent --</option>';
+            const docenten = Object.keys(data).sort();
+            docenten.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                docentSelect.appendChild(opt);
+            });
+            
+            const vakSelect = document.getElementById('vak-select');
+            vakSelect.innerHTML = '<option value="">-- Selecteer een vak --</option>';
+            const vakken = new Set();
+            Object.values(data).forEach(arr => arr.forEach(e => {
+                if (e.vak) vakken.add(e.vak);
+            }));
+            const sortedVakken = Array.from(vakken).sort();
+            sortedVakken.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                vakSelect.appendChild(opt);
+            });
+            
+            const totalTaken = Object.values(data).reduce((a, b) => a + b.length, 0);
+            document.getElementById('stats').innerHTML = 
+                `📊 ${docenten.length} docenten • ${totalTaken} surveillancetaken • ${sortedVakken.length} vakken`;
+            document.getElementById('stats').classList.remove('hidden');
+            document.getElementById('filters').classList.remove('hidden');
+            
+            document.getElementById('rooster-container').innerHTML = 
+                '<div class="no-data">👆 Selecteer een docent of vak om het rooster te bekijken</div>';
+        }
+
+        // ============ ROOSTER DISPLAY ============
+        const datumVolgorde = [];
+
+        function getOrderedDates(data) {
+            const allDates = new Set();
+            Object.values(data).forEach(arr => arr.forEach(e => allDates.add(e.datum)));
+            return Array.from(allDates).sort((a, b) => dateToNum(a) - dateToNum(b));
+        }
+
+        function toonRooster() {
+            const container = document.getElementById('rooster-container');
+            const docent = document.getElementById('docent-select').value;
+            
+            if (!docent) {
+                container.innerHTML = '<div class="no-data">👆 Selecteer een docent om het rooster te bekijken</div>';
+                return;
+            }
+
+            const taken = roosterData[docent];
+            if (!taken || taken.length === 0) {
+                container.innerHTML = '<div class="no-data">Geen roostergegevens gevonden voor deze docent.</div>';
+                return;
+            }
+
+            const grouped = {};
+            taken.forEach(item => {
+                if (!grouped[item.datum]) grouped[item.datum] = [];
+                grouped[item.datum].push(item);
+            });
+
+            const dates = getOrderedDates(roosterData);
+            let html = `<h2>📌 Rooster voor ${docent}</h2>`;
+            
+            dates.forEach(datum => {
+                if (grouped[datum]) {
+                    html += `<div class="date-header">📅 ${datum}</div>`;
+                    html += `<table>`;
+                    html += `<tr><th>Vak</th><th>Tijd</th><th>Groep</th><th>Lokaal</th><th>Rol</th></tr>`;
+                    
+                    grouped[datum].forEach(item => {
+                        const roleClass = item.rol === 'Surveillant' ? 'surveillant' : 'reserve';
+                        html += `<tr>`;
+                        html += `<td>${item.vak}</td>`;
+                        html += `<td>${item.tijd}</td>`;
+                        html += `<td>${item.groep}</td>`;
+                        html += `<td>${item.lokaal}</td>`;
+                        html += `<td><span class="role-badge ${roleClass}">${item.rol}</span></td>`;
+                        html += `</tr>`;
+                    });
+                    
+                    html += `</table>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toonVakRooster() {
+            const container = document.getElementById('rooster-container');
+            const gekozenVak = document.getElementById('vak-select').value;
+            
+            if (!gekozenVak) {
+                container.innerHTML = '<div class="no-data">👆 Selecteer een vak om het rooster te bekijken</div>';
+                return;
+            }
+
+            const entries = [];
+            Object.keys(roosterData).forEach(docent => {
+                roosterData[docent].forEach(item => {
+                    if (item.vak === gekozenVak) {
+                        entries.push({ ...item, docent });
+                    }
+                });
+            });
+
+            if (entries.length === 0) {
+                container.innerHTML = `<div class="no-data">Geen surveillances gevonden voor het vak ${gekozenVak}.</div>`;
+                return;
+            }
+
+            const grouped = {};
+            entries.forEach(item => {
+                if (!grouped[item.datum]) grouped[item.datum] = [];
+                grouped[item.datum].push(item);
+            });
+
+            const dates = getOrderedDates(roosterData);
+            let html = `<h2>📚 Rooster voor vak: ${gekozenVak}</h2>`;
+            html += `<p style="color:#7f8c8d; margin-bottom:10px;">${entries.length} surveillance(s) gevonden</p>`;
+            
+            dates.forEach(datum => {
+                if (grouped[datum]) {
+                    html += `<div class="date-header">📅 ${datum}</div>`;
+                    html += `<table>`;
+                    html += `<tr><th>Docent</th><th>Tijd</th><th>Groep</th><th>Lokaal</th><th>Rol</th></tr>`;
+                    
+                    grouped[datum].forEach(item => {
+                        const roleClass = item.rol === 'Surveillant' ? 'surveillant' : 'reserve';
+                        html += `<tr>`;
+                        html += `<td><strong>${item.docent}</strong></td>`;
+                        html += `<td>${item.tijd}</td>`;
+                        html += `<td>${item.groep}</td>`;
+                        html += `<td>${item.lokaal}</td>`;
+                        html += `<td><span class="role-badge ${roleClass}">${item.rol}</span></td>`;
+                        html += `</tr>`;
+                    });
+                    
+                    html += `</table>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function printRooster() {
+            const docent = document.getElementById('docent-select').value;
+            const vak = document.getElementById('vak-select').value;
+            
+            if (!docent && !vak) {
+                alert('Selecteer eerst een docent of vak om af te drukken.');
+                return;
+            }
+            
+            if (vak) {
+                toonVakRooster();
+            } else {
+                toonRooster();
+            }
+            
+            setTimeout(() => window.print(), 100);
+        }
+
+        // ============ EVENT LISTENERS ============
+        document.getElementById('docent-select').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') toonRooster();
+        });
+
+        document.getElementById('vak-select').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') toonVakRooster();
+        });
+    </script>
+</body>
+</html>
